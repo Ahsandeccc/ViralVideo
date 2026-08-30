@@ -43,6 +43,19 @@ describe("single video imports", () => {
     });
   });
 
+  it("normalizes unquoted iframe attributes for single submissions", () => {
+    const video = validateVideoImport({
+      title: "Unquoted embed",
+      embedCode:
+        "<iframe src=https://youtube.com/embed/single width=100% height=315 allowfullscreen></iframe>",
+    });
+
+    expect(video.embedCode).toContain('src="https://youtube.com/embed/single"');
+    expect(video.embedCode).toContain('width="100%"');
+    expect(video.embedCode).toContain('height="315"');
+    expect(video.embedCode).toMatch(/\sallowfullscreen(?:="")?(?:\s|>)/);
+  });
+
   it("converts invalid iframe input into a handled validation error", () => {
     expect(() =>
       validateVideoImport({ title: "Demo", embedCode: "not an iframe" }),
@@ -57,15 +70,21 @@ describe("single video imports", () => {
 });
 
 describe("bulk video imports", () => {
-  it("trims titles and sanitizes each valid iframe", () => {
+  it("trims titles and sanitizes bulk-paste and CSV-shaped iframe rows", () => {
     const videos = validateVideoImports([
       { title: " First video ", embedCode: validEmbed },
-      { title: "Second video", embedCode: validEmbed },
+      {
+        title: "CSV video",
+        embedCode:
+          "<iframe src=https://youtube.com/embed/csv width=100% allowfullscreen></iframe>",
+      },
     ]);
 
     expect(videos).toHaveLength(2);
     expect(videos[0].title).toBe("First video");
     expect(videos[0].embedCode).toContain('loading="lazy"');
+    expect(videos[1].embedCode).toContain('src="https://youtube.com/embed/csv"');
+    expect(videos[1].embedCode).toContain('width="100%"');
   });
 
   it("reports the invalid row number before any database write", () => {

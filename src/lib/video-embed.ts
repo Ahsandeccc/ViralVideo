@@ -67,25 +67,43 @@ export function sanitizeVideoEmbed(value: unknown): string {
   }
 
   const rawAttributes = completeIframeMatch[1];
-  const attributePattern = /([^\s=/>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'))?/g;
+  const attributePattern =
+    /\s*([^\s=/>"'`]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/gy;
   const attributes = new Map<string, string>();
-  let attributeMatch: RegExpExecArray | null;
-  let consumed = "";
+  let cursor = 0;
 
-  while ((attributeMatch = attributePattern.exec(rawAttributes)) !== null) {
-    consumed += attributeMatch[0];
+  while (cursor < rawAttributes.length) {
+    if (!rawAttributes.slice(cursor).trim()) {
+      break;
+    }
+
+    attributePattern.lastIndex = cursor;
+    const attributeMatch = attributePattern.exec(rawAttributes);
+    if (!attributeMatch || attributeMatch.index !== cursor) {
+      throw new EmbedValidationError("The iframe contains malformed attributes.");
+    }
+
+    cursor = attributePattern.lastIndex;
     const name = attributeMatch[1].toLowerCase();
+    if (!/^[a-z][a-z0-9:-]*$/.test(name)) {
+      throw new EmbedValidationError("The iframe contains a malformed attribute name.");
+    }
     if (attributes.has(name)) {
       throw new EmbedValidationError(`Duplicate iframe attribute: ${name}.`);
     }
-    if (!attributeMatch[2] && !attributeMatch[3] && name !== "allowfullscreen") {
-      throw new EmbedValidationError("Iframe attribute values must be quoted.");
-    }
-    attributes.set(name, attributeMatch[2] ?? attributeMatch[3] ?? "");
-  }
 
-  if (consumed.replace(/\s/g, "") !== rawAttributes.replace(/\s/g, "")) {
-    throw new EmbedValidationError("The iframe contains malformed attributes.");
+    const hasValue =
+      attributeMatch[2] !== undefined ||
+      attributeMatch[3] !== undefined ||
+      attributeMatch[4] !== undefined;
+    if (!hasValue && name !== "allowfullscreen") {
+      throw new EmbedValidationError(`Iframe attribute ${name} requires a value.`);
+    }
+
+    attributes.set(
+      name,
+      attributeMatch[2] ?? attributeMatch[3] ?? attributeMatch[4] ?? "",
+    );
   }
 
   const supportedAttributes = new Set([
@@ -130,8 +148,12 @@ export function sanitizeVideoEmbed(value: unknown): string {
   for (const name of ["width", "height"] as const) {
     const dimension = attributes.get(name);
     if (dimension) {
-      if (!/^\d{1,4}$/.test(dimension) || Number(dimension) < 1) {
-        throw new EmbedValidationError(`Iframe ${name} must be a positive number up to four digits.`);
+      const numericDimension = /^\d{1,4}$/.test(dimension) && Number(dimension) >= 1;
+      const percentageDimension = /^(?:100|[1-9]\d?)%$/.test(dimension);
+      if (!numericDimension && !percentageDimension) {
+        throw new EmbedValidationError(
+          `Iframe ${name} must be a positive number up to four digits or a percentage from 1% to 100%.`,
+        );
       }
       dimensions[name] = dimension;
     }

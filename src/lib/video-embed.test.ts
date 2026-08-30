@@ -12,6 +12,27 @@ describe("sanitizeVideoEmbed", () => {
     expect(result).not.toContain("script>");
   });
 
+  it("accepts mixed formatting, unquoted values, and boolean attributes", () => {
+    const result = sanitizeVideoEmbed(
+      "<iframe   src = https://youtube.com/embed/a   width=100% height = 315 allowfullscreen ></iframe>",
+    );
+
+    expect(result).toContain('src="https://youtube.com/embed/a"');
+    expect(result).toContain('width="100%"');
+    expect(result).toContain('height="315"');
+    expect(result).toMatch(/\sallowfullscreen(?:="")?(?:\s|>)/);
+  });
+
+  it("accepts single-quoted and unquoted standard metadata", () => {
+    const result = sanitizeVideoEmbed(
+      "<iframe src='https://youtube.com/embed/a' title=Example loading=lazy referrerpolicy=strict-origin></iframe>",
+    );
+
+    expect(result).toContain('title="Example"');
+    expect(result).toContain('loading="lazy"');
+    expect(result).toContain('referrerpolicy="strict-origin-when-cross-origin"');
+  });
+
   it.each([
     "https://player.vimeo.com/video/123",
     "https://www.dailymotion.com/embed/video/x123",
@@ -56,8 +77,9 @@ describe("sanitizeVideoEmbed", () => {
     expect(() => sanitizeVideoEmbed(embed)).toThrow(EmbedValidationError);
   });
 
-  it("rejects malformed dimensions and duplicate attributes", () => {
-    expect(() => sanitizeVideoEmbed('<iframe src="https://youtube.com/embed/a" width="100%"></iframe>')).toThrow(EmbedValidationError);
+  it("rejects malformed dimensions, attributes without required values, and duplicates", () => {
+    expect(() => sanitizeVideoEmbed('<iframe src="https://youtube.com/embed/a" width="101%"></iframe>')).toThrow(EmbedValidationError);
+    expect(() => sanitizeVideoEmbed('<iframe src="https://youtube.com/embed/a" width></iframe>')).toThrow(EmbedValidationError);
     expect(() => sanitizeVideoEmbed('<iframe src="https://youtube.com/embed/a" src="https://youtube.com/embed/b"></iframe>')).toThrow(EmbedValidationError);
   });
 });
