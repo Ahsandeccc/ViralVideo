@@ -54,7 +54,7 @@ export function sanitizeVideoEmbed(value: unknown): string {
 
   if (
     /<\s*(?:script|style|object|embed|svg|math|link|meta)\b/i.test(input) ||
-    /\son[a-z0-9_-]+\s*=/i.test(input) ||
+    /\son[a-z0-9_-]+(?:\s*=|\s|>)/i.test(input) ||
     /(?:javascript|data|vbscript)\s*:/i.test(input) ||
     /<!--|-->/i.test(input)
   ) {
@@ -96,7 +96,15 @@ export function sanitizeVideoEmbed(value: unknown): string {
       attributeMatch[2] !== undefined ||
       attributeMatch[3] !== undefined ||
       attributeMatch[4] !== undefined;
-    if (!hasValue && name !== "allowfullscreen") {
+    const attributesRequiringValues = new Set([
+      "src",
+      "title",
+      "width",
+      "height",
+      "loading",
+      "referrerpolicy",
+    ]);
+    if (!hasValue && attributesRequiringValues.has(name)) {
       throw new EmbedValidationError(`Iframe attribute ${name} requires a value.`);
     }
 
@@ -106,21 +114,11 @@ export function sanitizeVideoEmbed(value: unknown): string {
     );
   }
 
-  const supportedAttributes = new Set([
-    "src",
-    "title",
-    "width",
-    "height",
-    "allowfullscreen",
-    "loading",
-    "referrerpolicy",
-  ]);
-  const unsupportedAttribute = [...attributes.keys()].find(
-    (name) => !supportedAttributes.has(name),
-  );
-  if (unsupportedAttribute) {
-    throw new EmbedValidationError(`Unsupported iframe attribute: ${unsupportedAttribute}.`);
-  }
+  // Provider embed snippets commonly contain legacy, vendor-specific, aria-*,
+  // data-*, and presentation attributes. Parse them to validate the markup, but
+  // deliberately do not copy them to the output. The fixed output below keeps
+  // only safe, application-controlled attributes, so unknown attributes can be
+  // ignored without weakening the iframe's XSS boundary.
 
   const sourceValue = attributes.get("src");
   if (!sourceValue) {

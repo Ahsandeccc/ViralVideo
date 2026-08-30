@@ -23,14 +23,19 @@ describe("sanitizeVideoEmbed", () => {
     expect(result).toMatch(/\sallowfullscreen(?:="")?(?:\s|>)/);
   });
 
-  it("accepts single-quoted and unquoted standard metadata", () => {
+  it("accepts standard, legacy, accessibility, and provider-specific attributes", () => {
     const result = sanitizeVideoEmbed(
-      "<iframe src='https://youtube.com/embed/a' title=Example loading=lazy referrerpolicy=strict-origin></iframe>",
+      "<iframe src='https://youtube.com/embed/a' title=Example loading=lazy referrerpolicy=strict-origin frameborder=0 scrolling=no marginwidth=0 marginheight=0 allow='autoplay; encrypted-media' style='border:0' aria-label='Video' data-provider=youtube webkitallowfullscreen></iframe>",
     );
 
     expect(result).toContain('title="Example"');
     expect(result).toContain('loading="lazy"');
     expect(result).toContain('referrerpolicy="strict-origin-when-cross-origin"');
+    expect(result).not.toContain("frameborder");
+    expect(result).not.toContain("scrolling");
+    expect(result).not.toContain("style=");
+    expect(result).not.toContain("data-provider");
+    expect(result).not.toContain("webkitallowfullscreen");
   });
 
   it.each([
@@ -69,11 +74,10 @@ describe("sanitizeVideoEmbed", () => {
 
   it.each([
     '<iframe src="https://youtube.com/embed/a" onload="alert(1)"></iframe>',
-    '<iframe src="https://youtube.com/embed/a" allow="camera *"></iframe>',
+    '<iframe src="https://youtube.com/embed/a" onload></iframe>',
     '<iframe src="javascript:alert(1)"></iframe>',
     '<div><iframe src="https://youtube.com/embed/a"></iframe></div>',
-    '<iframe src="https://youtube.com/embed/a" style="position:fixed"></iframe>',
-  ])("rejects dangerous or unsupported iframe markup", (embed) => {
+  ])("rejects dangerous iframe markup", (embed) => {
     expect(() => sanitizeVideoEmbed(embed)).toThrow(EmbedValidationError);
   });
 

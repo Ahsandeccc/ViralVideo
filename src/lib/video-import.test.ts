@@ -43,17 +43,20 @@ describe("single video imports", () => {
     });
   });
 
-  it("normalizes unquoted iframe attributes for single submissions", () => {
+  it("normalizes unquoted and legacy iframe attributes for single submissions", () => {
     const video = validateVideoImport({
       title: "Unquoted embed",
       embedCode:
-        "<iframe src=https://youtube.com/embed/single width=100% height=315 allowfullscreen></iframe>",
+        "<iframe src=https://youtube.com/embed/single width=100% height=315 frameborder=0 scrolling=no allow='autoplay' allowfullscreen></iframe>",
     });
 
     expect(video.embedCode).toContain('src="https://youtube.com/embed/single"');
     expect(video.embedCode).toContain('width="100%"');
     expect(video.embedCode).toContain('height="315"');
     expect(video.embedCode).toMatch(/\sallowfullscreen(?:="")?(?:\s|>)/);
+    expect(video.embedCode).not.toContain("frameborder");
+    expect(video.embedCode).not.toContain("scrolling");
+    expect(video.embedCode).not.toContain("allow=");
   });
 
   it("converts invalid iframe input into a handled validation error", () => {
