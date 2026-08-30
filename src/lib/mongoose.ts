@@ -1,3 +1,5 @@
+import "server-only";
+
 import mongoose, { type Mongoose } from "mongoose";
 
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -16,9 +18,9 @@ const cache = global.mongooseCache ?? {
   promise: null,
 };
 
-if (process.env.NODE_ENV !== "production") {
-  global.mongooseCache = cache;
-}
+// Cache in every environment so warm production instances reuse both active
+// connections and in-flight connection attempts instead of opening new pools.
+global.mongooseCache = cache;
 
 export async function connectToDatabase(): Promise<Mongoose> {
   if (!MONGODB_URI?.trim()) {
@@ -54,10 +56,7 @@ export async function connectToDatabase(): Promise<Mongoose> {
         console.warn("[mongodb] Connection attempt failed", {
           code: databaseError?.code,
           codeName: databaseError?.codeName,
-          message:
-            typeof databaseError?.message === "string"
-              ? databaseError.message
-              : "Unknown MongoDB connection error",
+          name: error instanceof Error ? error.name : "UnknownError",
         });
         throw error;
       });

@@ -1,3 +1,5 @@
+import "server-only";
+
 import { connectToDatabase } from "@/lib/mongoose";
 import { Video } from "@/models/Video";
 

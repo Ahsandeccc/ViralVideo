@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
 
@@ -29,7 +31,7 @@ function signature(payload: string): string {
 }
 
 export function verifyAdminPassword(password: unknown): boolean {
-  if (typeof password !== "string") return false;
+  if (typeof password !== "string" || password.length > 1024) return false;
   return constantTimeEqual(password.trim(), getAdminSecret());
 }
 

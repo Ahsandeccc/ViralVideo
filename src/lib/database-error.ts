@@ -2,11 +2,26 @@ type DatabaseLikeError = {
   code?: unknown;
   codeName?: unknown;
   message?: unknown;
+  name?: unknown;
 };
 
 export function databaseErrorResponse(error: unknown): { message: string; status: number } {
   const databaseError = error as DatabaseLikeError;
   const message = typeof databaseError?.message === "string" ? databaseError.message : "";
+
+  if (databaseError?.name === "ValidationError") {
+    return {
+      message: "The video did not satisfy the database validation rules.",
+      status: 400,
+    };
+  }
+
+  if (databaseError?.code === 11000) {
+    return {
+      message: "That video already exists.",
+      status: 409,
+    };
+  }
 
   if (databaseError?.code === 8000 || databaseError?.codeName === "AtlasError" || /bad auth|authentication failed/i.test(message)) {
     return {

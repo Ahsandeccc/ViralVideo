@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
-import Script from "next/script";
+import {
+  PublicAdvertising,
+  PublicSponsoredLink,
+} from "@/components/public-advertising";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -40,28 +43,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <nav className="flex flex-wrap items-center gap-5" aria-label="Footer links">
               <a href="#privacy" className="hover:text-pink-700">Privacy Policy</a>
               <a href="#terms" className="hover:text-pink-700">Terms & Conditions</a>
-              <a
-                href="https://www.profitableratecpmnetwork.com/w56bday40?key=079a4b21d035c5cf2181ce60e119c0a3"
-                target="_blank"
-                rel="noopener noreferrer sponsored"
-                className="rounded-full border border-pink-200 bg-pink-50 px-3 py-1.5 font-semibold text-pink-700 transition hover:border-pink-300 hover:bg-pink-100"
-              >
-                Sponsored recommendation
-              </a>
+              <PublicSponsoredLink />
             </nav>
             <span>© 2026 Viral Video. All rights reserved.</span>
           </div>
         </footer>
-        <Script
-          id="profitablerate-popunder"
-          src="https://pl31095150.profitableratecpmnetwork.com/dc/93/cc/dc93cce61bfb94f8833dad7c0c7c1e89.js"
-          strategy="afterInteractive"
-        />
-        <Script
-          id="profitablerate-social-bar"
-          src="https://pl31095152.profitableratecpmnetwork.com/e2/dd/8b/e2dd8b95dd10e3a0d3cb67e71fdbc9d5.js"
-          strategy="afterInteractive"
-        />
+        <PublicAdvertising />
       </body>
     </html>
   );

@@ -68,7 +68,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         <Script
           id="profitablerate-native-banner"
           src="https://pl31095151.profitableratecpmnetwork.com/655ba64d2f3a227000a55994121c3a8e/invoke.js"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
       </aside>
  

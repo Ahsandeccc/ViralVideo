@@ -8,7 +8,8 @@ describe("sanitizeVideoEmbed", () => {
     );
     expect(result).toContain('src="https://www.youtube.com/embed/demo"');
     expect(result).toContain('loading="lazy"');
-    expect(result).not.toContain("script");
+    expect(result).toContain('sandbox="allow-scripts allow-same-origin allow-presentation"');
+    expect(result).not.toContain("script>");
   });
 
   it.each([
@@ -43,5 +44,20 @@ describe("sanitizeVideoEmbed", () => {
   it("rejects multiple frames and executable markup", () => {
     expect(() => sanitizeVideoEmbed('<iframe src="https://youtube.com/embed/a"></iframe><iframe src="https://youtube.com/embed/b"></iframe>')).toThrow(EmbedValidationError);
     expect(() => sanitizeVideoEmbed('<script>alert(1)</script>')).toThrow(EmbedValidationError);
+  });
+
+  it.each([
+    '<iframe src="https://youtube.com/embed/a" onload="alert(1)"></iframe>',
+    '<iframe src="https://youtube.com/embed/a" allow="camera *"></iframe>',
+    '<iframe src="javascript:alert(1)"></iframe>',
+    '<div><iframe src="https://youtube.com/embed/a"></iframe></div>',
+    '<iframe src="https://youtube.com/embed/a" style="position:fixed"></iframe>',
+  ])("rejects dangerous or unsupported iframe markup", (embed) => {
+    expect(() => sanitizeVideoEmbed(embed)).toThrow(EmbedValidationError);
+  });
+
+  it("rejects malformed dimensions and duplicate attributes", () => {
+    expect(() => sanitizeVideoEmbed('<iframe src="https://youtube.com/embed/a" width="100%"></iframe>')).toThrow(EmbedValidationError);
+    expect(() => sanitizeVideoEmbed('<iframe src="https://youtube.com/embed/a" src="https://youtube.com/embed/b"></iframe>')).toThrow(EmbedValidationError);
   });
 });

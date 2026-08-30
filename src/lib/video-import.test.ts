@@ -3,6 +3,8 @@ import { databaseErrorResponse } from "@/lib/database-error";
 import {
   MAX_BULK_VIDEOS,
   VideoImportError,
+  sanitizeVideoTitle,
+  validateVideoImport,
   validateVideoImports,
 } from "@/lib/video-import";
 
@@ -28,6 +30,29 @@ describe("database error responses", () => {
 
     expect(response.status).toBe(503);
     expect(response.message).toMatch(/unavailable/i);
+  });
+});
+
+describe("single video imports", () => {
+  it("normalizes a valid publish payload", () => {
+    expect(
+      validateVideoImport({ title: " Demo ", embedCode: validEmbed }),
+    ).toMatchObject({
+      title: "Demo",
+      embedCode: expect.stringContaining('src="https://www.youtube.com/embed/example"'),
+    });
+  });
+
+  it("converts invalid iframe input into a handled validation error", () => {
+    expect(() =>
+      validateVideoImport({ title: "Demo", embedCode: "not an iframe" }),
+    ).toThrowError(VideoImportError);
+  });
+  it("normalizes whitespace and rejects HTML or control characters in titles", () => {
+    expect(sanitizeVideoTitle("  A\t useful   title  ")).toBe("A useful title");
+    expect(() => sanitizeVideoTitle("<img src=x onerror=alert(1)>")).toThrowError(VideoImportError);
+    expect(() => sanitizeVideoTitle("unsafe\u0000title")).toThrowError(VideoImportError);
+    expect(() => sanitizeVideoTitle(123)).toThrowError(VideoImportError);
   });
 });
 
