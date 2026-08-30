@@ -2,6 +2,8 @@ import sanitizeHtml from "sanitize-html";
 
 const MAX_EMBED_LENGTH = 5000;
 const BUILT_IN_EMBED_HOSTS = new Set([
+  "www.youtube.com",
+  "youtube.com",
   "www.redtube.net",
   "www.eporner.com",
   "www.xnxx.com",

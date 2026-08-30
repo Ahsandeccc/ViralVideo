@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Script from "next/script";
 import { getVideoPage, type VideoPage } from "@/lib/video-data";
 
 export const dynamic = "force-dynamic";
@@ -59,6 +60,18 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         {result.totalVideos > 0 && <p className="text-sm text-pink-800/60">{result.totalVideos} videos</p>}
       </div>
 
+      <aside className="mb-8" aria-label="Sponsored content">
+        <p className="mb-2 text-center text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-pink-800/50">
+          Advertisement
+        </p>
+        <div id="container-655ba64d2f3a227000a55994121c3a8e" />
+        <Script
+          id="profitablerate-native-banner"
+          src="https://pl31095151.profitableratecpmnetwork.com/655ba64d2f3a227000a55994121c3a8e/invoke.js"
+          strategy="afterInteractive"
+        />
+      </aside>
+ 
       {hasDatabaseError ? (
         <div className="empty-state"><span className="empty-icon">!</span><h2>Videos temporarily unavailable</h2><p>We couldn’t connect to the video library. Please try again soon.</p></div>
       ) : result.videos.length === 0 ? (
